@@ -29,7 +29,7 @@ services:
   db:
     image: postgres:17
     container_name: postgres
-    command: -c random_page_cost=1.1 -c shared_buffers=512MB -c effective_cache_size=1536MB
+    command: -c random_page_cost=1.1
     ports:
       - "5432:5432"
     environment:

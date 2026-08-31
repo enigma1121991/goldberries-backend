@@ -19,13 +19,12 @@ $sort = isset($_REQUEST['sort']) ? $_REQUEST['sort'] : null;
 $sort_dir = isset($_REQUEST['sort_dir']) ? strtolower($_REQUEST['sort_dir']) : null;
 $depth = 3;
 
-$where = "";
+$query = "SELECT * FROM view_challenges";
+
 if ($search !== null) {
   $search = pg_escape_string($search);
-  $where = " WHERE campaign_name ILIKE '%" . $search . "%' OR map_name ILIKE '%" . $search . "%'";
+  $query .= " WHERE campaign_name ILIKE '%" . $search . "%' OR map_name ILIKE '%" . $search . "%'";
 }
-
-$query = "SELECT * FROM view_challenges" . $where;
 
 if ($sort !== null) {
   if (!in_array($sort, $valid_sorts)) {
@@ -40,14 +39,20 @@ if ($sort !== null) {
   }
 }
 
+$query = "
+    WITH challenges AS (
+      " . $query . "
+    )
+    SELECT *, count(*) OVER () AS total_count
+    FROM challenges";
+
 if ($per_page !== -1) {
   $query .= " LIMIT " . $per_page . " OFFSET " . ($page - 1) * $per_page;
 }
 
-$countResult = pg_query_params_or_die($DB, "SELECT count(*) FROM view_challenges" . $where);
-$maxCount = intval(pg_fetch_result($countResult, 0, 0));
 $result = pg_query_params_or_die($DB, $query);
 
+$maxCount = 0;
 $challenges = [];
 while ($row = pg_fetch_assoc($result)) {
   $challenge = new Challenge();
@@ -58,6 +63,11 @@ while ($row = pg_fetch_assoc($result)) {
   $challenge->data = [
     'count_submissions' => intval($row['count_submissions']),
   ];
+
+  if ($maxCount === 0) {
+    $maxCount = intval($row['total_count']);
+  }
+
 }
 
 api_write(
