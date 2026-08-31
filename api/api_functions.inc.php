@@ -114,12 +114,8 @@ function api_write($output, $check_numbers = false, $run_profiler = false)
 
 function api_write_for_profiler($output, $flags)
 {
-  profiler_end();
-  $json = json_encode($output, $flags);
-  //Parse json again
-  $obj = json_decode($json, true);
-  $obj['profiler'] = profiler_get_data();
-  echo json_encode($obj, $flags);
+  profiler_end($output);
+  echo json_encode($output, $flags);
 }
 
 function api_unified_get($DB, string $table_noesc, $object_skel)

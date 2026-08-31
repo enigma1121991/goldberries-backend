@@ -239,10 +239,9 @@ abstract class DbObject
   static function fetch_expand_data($DB, $expand_list)
   {
     foreach ($expand_list as $table => $ids) {
-      // Remove any already cached IDs from the list to fetch
-      if (isset(self::$dataCache[$table])) {
-        $cached_ids = array_keys(self::$dataCache[$table]);
-        $ids = array_diff($ids, $cached_ids);
+      $ids = array_diff_key($ids, self::$dataCache[$table] ?? []);
+      if (count($ids) === 0) {
+        continue;
       }
 
       $fetched_data = db_fetch_id_many($DB, $table, $ids);
@@ -250,8 +249,6 @@ abstract class DbObject
         continue;
       }
       while ($row = pg_fetch_assoc($fetched_data)) {
-        if (!isset(self::$dataCache[$table]))
-          self::$dataCache[$table] = [];
         self::$dataCache[$table][$row['id']] = $row;
       }
     }
@@ -259,39 +256,19 @@ abstract class DbObject
 
   static function add_to_expand_list(&$expand_list, $class, $id)
   {
-    if (!isset($expand_list[$class::$table_name]))
-      $expand_list[$class::$table_name] = [];
-    if (!in_array($id, $expand_list[$class::$table_name]))
-      $expand_list[$class::$table_name][] = $id;
+    $expand_list[$class::$table_name][$id] = $id;
   }
   static function merge_expand_lists(&$expand_list1, $expand_list2)
   {
-    if ($expand_list1 === null) {
-      $expand_list1 = $expand_list2;
-      return;
-    }
-    if ($expand_list2 === null) {
-      return;
-    }
-
-    foreach ($expand_list2 as $table => $ids) {
-      if (!isset($expand_list1[$table]))
-        $expand_list1[$table] = [];
+    foreach ($expand_list2 ?? [] as $table => $ids) {
       foreach ($ids as $id) {
-        if (!in_array($id, $expand_list1[$table]))
-          $expand_list1[$table][] = $id;
+        $expand_list1[$table][$id] = $id;
       }
     }
   }
   static function get_object_from_data_list($data, $class, $id)
   {
-    $table = $class::$table_name;
-    $arr = $data[$table] ?? null;
-    if (!isset($arr) || !in_array($id, array_keys($arr))) {
-      return null;
-    }
-    $obj = $arr[$id] ?? null;
-    return $obj;
+    return $data[$class::$table_name][$id] ?? null;
   }
   #endregion
 

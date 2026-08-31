@@ -7,11 +7,25 @@ function db_connect()
   return $db_conn;
 }
 
+$DB_ROWS = [];
+
+function db_invalidate(string $table_noesc)
+{
+  global $DB_ROWS;
+  unset($DB_ROWS[strtolower($table_noesc)]);
+}
+
 /* fetch and verify if an id exists in the specified table
  * returns the associated assoc array if it does, false if not */
+
 function db_fetch_id($DB, string $table_noesc, int $id)
 {
-  $table = pg_escape_identifier(strtolower($table_noesc));
+  global $DB_ROWS;
+  $name = strtolower($table_noesc);
+  if (isset($DB_ROWS[$name][$id]))
+    return $DB_ROWS[$name][$id];
+
+  $table = pg_escape_identifier($name);
   $result = pg_query_params(
     $DB,
     "SELECT * FROM {$table} WHERE id = $1;",
@@ -19,7 +33,7 @@ function db_fetch_id($DB, string $table_noesc, int $id)
   );
   /* false is returned if row exceeds the number of rows in the set, there are
    * no more rows, or on any other error. anything else typejuggles to true */
-  return pg_fetch_assoc($result);
+  return $DB_ROWS[$name][$id] = pg_fetch_assoc($result);
 }
 function db_fetch_id_many($DB, string $table_noesc, array $ids)
 {
@@ -102,6 +116,7 @@ function pg_query_params_or_die($DB, string $query, array $params = [], $errorMs
 
 function db_update($DB, string $table_noesc, int $id, $arr)
 {
+  db_invalidate($table_noesc);
   $table = pg_escape_identifier(strtolower($table_noesc));
   $query = "UPDATE {$table} SET ";
   $params = array();
@@ -125,6 +140,7 @@ function db_update($DB, string $table_noesc, int $id, $arr)
 
 function db_insert($DB, string $table_noesc, $arr)
 {
+  db_invalidate($table_noesc);
   $table = pg_escape_identifier(strtolower($table_noesc));
   $query = "INSERT INTO {$table} (";
   $params = array();
@@ -165,6 +181,7 @@ function fix_pg_variable_value($value)
 
 function db_delete($DB, string $table_noesc, int $id)
 {
+  db_invalidate($table_noesc);
   $table = pg_escape_identifier(strtolower($table_noesc));
   $result = pg_query_params(
     $DB,
