@@ -5,8 +5,8 @@ abstract class DbObject
   public static string $table_name;
 
   public int $id;
-  private int $max_expanded = 1;
-  private int $max_expanded_structure = 1;
+  protected int $max_expanded = 1;
+  protected int $max_expanded_structure = 1;
 
   #region Abstract Functions
   abstract function get_field_set();
@@ -48,6 +48,21 @@ abstract class DbObject
     }
 
     $this->do_expand_foreign_keys($DB, $depth, $expand_structure);
+  }
+
+  static function expand_many($DB, $objects, $depth = 2, $expand_structure = true)
+  {
+    if ($depth <= 1 || count($objects) === 0)
+      return;
+
+    self::fetch_data_for_objects($DB, $objects, $depth - 1, $expand_structure);
+
+    foreach ($objects as $obj) {
+      if ($expand_structure)
+        $obj->max_expanded_structure = max($obj->max_expanded_structure, $depth);
+      else
+        $obj->max_expanded = max($obj->max_expanded, $depth);
+    }
   }
 
   #endregion
@@ -129,10 +144,9 @@ abstract class DbObject
       while ($row = pg_fetch_assoc($result)) {
         $obj = new static;
         $obj->apply_db_data($row);
-        if ($depth > 1)
-          $obj->expand_foreign_keys($DB, $depth, $expand_structure);
         $json_arr[] = $obj;
       }
+      static::expand_many($DB, $json_arr, $depth, $expand_structure);
       return $json_arr;
     }
     if (!is_valid_id_query($id)) {
