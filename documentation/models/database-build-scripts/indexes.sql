@@ -27,16 +27,12 @@ CREATE INDEX ON change (campaign_id);
 CREATE INDEX ON change (player_id);
 CREATE INDEX ON change (author_id);
 
-CREATE INDEX ON "like" (challenge_id);
 CREATE INDEX ON "like" (player_id);
 
 CREATE INDEX ON showcase (account_id);
 CREATE INDEX ON showcase (submission_id);
 CREATE INDEX ON badge_player (player_id);
-CREATE INDEX ON badge_player (badge_id);
-CREATE INDEX ON stamp_submission (submission_id);
 CREATE INDEX ON stamp_submission (player_id);
-CREATE INDEX ON verification_notice (submission_id);
 CREATE INDEX ON verification_notice (verifier_id);
 CREATE INDEX ON post (author_id);
 
