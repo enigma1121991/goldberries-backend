@@ -6,4 +6,4 @@ pg_restore \
   --dbname="$POSTGRES_DB" \
   /tmp/goldberries-data/backup-safe.dump
 
-psql --dbname="$POSTGRES_DB" -f /tmp/goldberries-data/indexes.sql
+psql --dbname="$POSTGRES_DB" -f /tmp/goldberries-indexes.sql
