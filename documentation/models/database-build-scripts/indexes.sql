@@ -15,6 +15,8 @@ CREATE INDEX ON map (counts_for_id);
 CREATE INDEX ON account (player_id);
 CREATE INDEX ON account (claimed_player_id);
 CREATE INDEX ON session (account_id);
+CREATE INDEX ON session (token);
+CREATE INDEX ON session (api_key);
 
 CREATE INDEX ON suggestion (challenge_id);
 CREATE INDEX ON suggestion (author_id);
